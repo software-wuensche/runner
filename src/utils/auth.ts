@@ -1,10 +1,20 @@
 import got from 'got'
 import { StepFile, TryFileOptions, tryFile } from './files'
 
-enum OauthContentType {
+export enum OAuthContentType {
   JSON = 'application/json',
   FORM = 'application/x-www-form-urlencoded'
 }
+
+export type OAuthClientConfig = {
+  endpoint: string
+  client_id: string
+  client_secret: string
+  audience?: string
+  scope?: string
+  contentType?: OAuthContentType
+}
+
 export type Credential = {
   basic?: {
     username: string
@@ -13,14 +23,7 @@ export type Credential = {
   bearer?: {
     token: string
   }
-  oauth?: {
-    endpoint: string
-    client_id: string
-    client_secret: string
-    audience?: string
-    scope?: string
-    contentType?: OauthContentType
-  }
+  oauth?: OAuthClientConfig
   certificate?: {
     ca?: string | StepFile
     cert?: string | StepFile
@@ -36,15 +39,6 @@ export type Credential = {
 
 export type CredentialsStorage = {
   [key: string]: Credential
-}
-
-type OAuthClientConfig = {
-  endpoint: string
-  client_id: string
-  client_secret: string
-  audience?: string
-  scope?: string
-  contentType?: OauthContentType
 }
 
 export type OAuthResponse = {
@@ -67,7 +61,7 @@ export type TLSCertificate = {
 }
 
 export async function getOAuthToken(clientConfig: OAuthClientConfig): Promise<OAuthResponse> {
-  let contentType = OauthContentType.JSON
+  let contentType = OAuthContentType.JSON
   let body = ''
   let authObject: {[key: string]: any} = {
     grant_type: 'client_credentials',
@@ -76,7 +70,7 @@ export async function getOAuthToken(clientConfig: OAuthClientConfig): Promise<OA
     audience: clientConfig.audience,
     scope: clientConfig.scope
   }
-  if (clientConfig.contentType === OauthContentType.FORM) {
+  if (clientConfig.contentType === OAuthContentType.FORM) {
     contentType = clientConfig.contentType
     let authParams = new URLSearchParams()
     for (const key in authObject) {
