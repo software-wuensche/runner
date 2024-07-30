@@ -1,5 +1,6 @@
 import got from 'got'
 import { StepFile, TryFileOptions, tryFile } from './files'
+import { WorkflowOptions } from '..'
 
 export enum OAuthContentType {
   JSON = 'application/json',
@@ -60,7 +61,7 @@ export type TLSCertificate = {
   certChain?: string | Buffer
 }
 
-export async function getOAuthToken(clientConfig: OAuthClientConfig): Promise<OAuthResponse> {
+export async function getOAuthToken(clientConfig: OAuthClientConfig, options?: WorkflowOptions): Promise<OAuthResponse> {
   let contentType = OAuthContentType.JSON
   let body = ''
   let authObject: {[key: string]: any} = {
@@ -88,10 +89,15 @@ export async function getOAuthToken(clientConfig: OAuthClientConfig): Promise<OA
     },
     body: body
   })
+    .on('request', (request) => 
+      options?.ee?.emit('step:http_request', request))
+    .on('response', (response) =>
+      options?.ee?.emit('step:http_response', response)
+    )
     .json() as OAuthResponse
 }
 
-export async function getAuthHeader(credential: Credential): Promise<string | undefined> {
+export async function getAuthHeader(credential: Credential, options?: WorkflowOptions): Promise<string | undefined> {
   if (credential.basic) {
     return 'Basic ' + Buffer.from(credential.basic.username + ':' + credential.basic.password).toString('base64')
   }
@@ -101,7 +107,7 @@ export async function getAuthHeader(credential: Credential): Promise<string | un
   }
 
   if (credential.oauth) {
-    const { access_token } = await getOAuthToken(credential.oauth)
+    const { access_token } = await getOAuthToken(credential.oauth, options)
     return 'Bearer ' + access_token
   }
 }

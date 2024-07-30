@@ -326,7 +326,7 @@ export default async function (
   // Auth
   let clientCredentials: HTTPCertificate | undefined
   if (params.auth) {
-    const authHeader = await getAuthHeader(params.auth)
+    const authHeader = await getAuthHeader(params.auth, options)
     if (authHeader) {
       if (!params.headers) params.headers = {}
       params.headers['Authorization'] = authHeader
